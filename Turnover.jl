@@ -8,6 +8,13 @@ module Turnover
     export orphaned_red, orphaned_green, orphaned_red_treeless, orphaned_green_treeless, orphaned_green_expected
 
     ##########################
+    ### Neutral Simulation ###
+    ##########################
+
+    include("neutral_haplotype_growth_v2_rework.jl")
+
+
+    ##########################
     ### Theoretical result ###
     ##########################
 
@@ -311,15 +318,22 @@ module Turnover
     using Test
 
     @testset "Applying turnover methods" begin
-        using .Turnover
+        using Main.Turnover
 
         using DataFrames
         using TumorGrowth: DataFrame, clones_by_mutations
-        # include("neutral_haplotype_growth_v1.jl")
-        include("neutral_haplotype_growth_v2.jl")
-
+    
         b, d, μ = 1., 0.8, 0.1
-        out = neutral_growth(2000 ; b = b, d = d, μ = μ)
+        @testset "simulation" begin
+            
+            out = neutral_growth(100 ; b = b, d = d, μ = μ, return_obs=true, showprogress=false)
+            neutral_growth!(out[:tumor], out[:obs], 120 ; b = b, d = d, μ = μ, showprogress=false)
+            neutral_growth!(deepcopy(out[:tumor]), 130 ; b = b, d = d, μ = μ, showprogress=false)
+            
+            @test !(:obs in keys( neutral_growth(10 ; b = b, d = d, μ = μ, return_obs=false, showprogress=false) ) )
+        end
+    
+        out = neutral_growth(1000 ; b = b, d = d, μ = μ, return_obs=true, showprogress=false)
         htumor = DataFrame(out[:tumor])
 
         @testset "estranged" begin

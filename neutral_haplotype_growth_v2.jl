@@ -55,10 +55,10 @@ function neutral_growth!(tumor, obs, endsize, T=Inf; b, d, μ, t=0., Nthresh=end
                 push!(tumor, Haplotype(push(parent.mutations, mutID), 1, t, row) )
                 push!(F, N+n)
 
-                obstemp[1] = parent.n + 1 - mnew
-                obstemp[2] = row == 1 ? N : sum( getfield.(filter(h-> row-1 in h.mutations, tumor[row : mutID]),:n) )
-                obstemp[3] = N
-                push!(obsarr, copy(obstemp) )
+#                 obstemp[1] = parent.n + 1 - mnew
+#                 obstemp[2] = row == 1 ? N : sum( getfield.(filter(h-> row-1 in h.mutations, tumor[row : mutID]),:n) )
+#                 obstemp[3] = N
+#                 push!(obsarr, copy(obstemp) )
             end
             if mnew == 0
                 parent.n += 1
@@ -77,11 +77,11 @@ function neutral_growth!(tumor, obs, endsize, T=Inf; b, d, μ, t=0., Nthresh=end
 
         ProgressMeter.update!(prog, N)
     end
-    obsnew = Matrix{Int}(undef, length(obsarr), 3)
-    for i=1:size(obsnew,2)
-        obsnew[:, i] = getindex.(obsarr, i)
-    end
-    obs = vcat(obs, obsnew)
+#     obsnew = Matrix{Int}(undef, length(obsarr), 3)
+#     for i=1:size(obsnew,2)
+#         obsnew[:, i] = getindex.(obsarr, i)
+#     end
+#     obs = vcat(obs, obsnew)
     return (tumor=tumor, obs=obs, N=N, t=t)
 end
 
