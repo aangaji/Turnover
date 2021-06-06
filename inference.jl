@@ -1,12 +1,13 @@
-using Pkg; Pkg.activate("C:/Users/Arman Angaji/OneDrive - Universität zu Köln/Dokumente/Uni-Köln/Masterarbeit/Workspace/Julia_Master/MasterProject_Julia")
+projectdir = "C:/Users/Arman Angaji/OneDrive - Universität zu Köln/Dokumente/Uni-Köln/Masterarbeit/Workspace/Julia_Master/MasterProject_Julia"
+using Pkg; Pkg.activate(projectdir)
 
-using DataFrames, StatsBase, Plots, Statistics, LaTeXStrings, Interact, LsqFit
+using DataFrames, StatsBase, Plots, Statistics, LaTeXStrings, Interact, LsqFit, CSV
 
 include("Turnover.jl")
 include("test.jl")
 using .Turnover
 
-using TumorGrowth: DataFrame, clones_by_mutations, nonspatial, nonspatial!
+using TumorGrowth: DataFrame, clones_by_mutations, nonspatial, nonspatial!, data_import
 
 #######################################
 
@@ -90,37 +91,27 @@ let dslider = slider(ds, label="d")
     end
 end
 
-#################################
+#########################
+### Single Simulation ###
+#########################
 
-b, d, mu, Nthresh = params = (b=1., d=0.5, μ=0.4, Nthresh=2000)
+### run
+b, d, mu, Nthresh = params = (b=1., d=0.4, μ=0.5, Nthresh=2000)
 out = neutral_growth(Nthresh; params..., return_obs=false)
 cutoff = length(out[:tumor])
-mu*b/(b-d)*Nthresh
-
 out = neutral_growth!(out[:tumor], 1000000; params...)
-
 tumor = DataFrame(out[:tumor][1:cutoff])
 
-function reduced_μ!(htumor, x)
-    reduced = vcat(htumor.mutations...) |> unique! |> sort! |>
-        muts -> filter!(muts) do m
-            rand()<=x
-        end
-    for (i,muts) in enumerate(htumor.mutations)
-        filter!(in(reduced), muts)
-        n = htumor.n[i]
-        htumor.n[i] = 0
-        if isempty(muts)
-            htumor.n[1] += n
-        else
-            htumor.n[last(muts)+1] += n
-        end
-    end
-    htumor
-end
-reduced_μ(htumor, x) = reduced_μ!(deepcopy(htumor), x)
+### save
+CSV.write("Turnover/turnover_data/simulated_tumors/tumor_N1000000_b$(b)_d$(d)_μ$(mu)_Nthresh$(Nthresh).csv", tumor)
 
-Ls = 0.3:0.02:0.5
+
+### load
+b, d, mu, Nthresh = params = (b=1., d=0.5, μ=0.5, Nthresh=2000)
+tumor = data_import("Turnover/turnover_data/simulated_tumors/tumor_N1000000_b$(b)_d$(d)_μ$(mu)_Nthresh$(Nthresh).csv", delim=",")
+
+
+Ls = 0.1:0.02:0.5
 reps = 50
 tumors = map( Ls ) do L
     [filter(h->!iszero(h.n), reduced_μ(tumor, L) ) for _=1:reps]
@@ -139,7 +130,7 @@ plot!(Ls, L -> W_estranged(d; b=b, μ=L*mu, T=log(Nthresh)/(b-d) ), lab="" )
 plot!(Ls, L -> W_estranged(d; b=b, μ=L*mu, T=Inf ), lab="" )
 
 ### theory + low noise
-t = [ W_estranged(d; b=b, μ=L*mu, T=log(Nthresh)/(b-d) ) .+ 0.1*randn(50) for L in Ls]
+# t = [ W_estranged(d; b=b, μ=L*mu, T=log(Nthresh)/(b-d) ) .+ 0.1*randn(50) for L in Ls]
 
 let
     function model(Ls, p)
@@ -173,8 +164,6 @@ let
     fits = map( tp-> curve_fit(model, Ls, tp, [0.5, 0.5]), tvecs)
     d_fits, mu_fits = getindex.(getfield.(fits, :param),1), getindex.(getfield.(fits, :param),2)
     d_err, mu_err = abs.(d_fits .- d), abs.(mu_fits .- mu)
-
-    println(" ",minimum(d_fits), " ", maximum(mu_fits))
 
     @manipulate for i in slider(1:length(fits))
         fit = fits[i]

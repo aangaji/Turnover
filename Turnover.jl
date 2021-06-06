@@ -3,6 +3,7 @@ module Turnover
     using DataFrames
     using TumorGrowth: clones_by_mutations
 
+    export reduced_μ, reduced_μ!
     export W_orphaned, W_estranged
     export estranged, estranged_treeless, estranged_expected
     export orphaned_red, orphaned_green, orphaned_red_treeless, orphaned_green_treeless, orphaned_green_expected
@@ -14,6 +15,34 @@ module Turnover
     include("neutral_haplotype_growth_v2.jl")
 #     include("neutral_haplotype_growth_v2_removedead.jl")
 
+    """
+        reduced_μ!(htumor, x)
+    Artificially reduces mutation rate of a **complete (!) haplotype-tumor** by sampling from its set of mutations, where each mutation is selected with probability x. <br>
+    Remaining identical haplotypes are recombined and mutation indices mapped to `1:nrow(htumor)-1`.
+    """
+    function reduced_μ!(htumor, x)
+        all_muts = vcat(htumor.mutations...) |> unique! |> sort!
+        remaining = all_muts[rand(nrow(htumor)-1).<=x]
+        removed = setdiff(all_muts, remaining)
+        for (i,muts) in enumerate(htumor.mutations)
+            filter!(in(remaining), muts)
+            n = htumor.n[i]
+            htumor.n[i] = 0
+            if isempty(muts)
+                htumor.n[1] += n
+            else
+                htumor.n[last(muts)+1] += n
+            end
+        end
+        delete!(htumor, removed.+1)
+        rebrand = (remaining .=> 1:nrow(htumor)-1)
+        for muts in htumor.mutations
+            replace!(muts, rebrand...)
+        end
+
+        return htumor
+    end
+    reduced_μ(htumor, x) = reduced_μ!(deepcopy(htumor), x)
 
     ##########################
     ### Theoretical result ###
