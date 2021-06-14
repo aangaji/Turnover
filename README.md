@@ -26,17 +26,40 @@ Determining whether a mutant lineage is orphaned or estranged is straight forwar
 We also considered the number of mutations arising at division to be distributed as `~ Poisson(μ)`. If mutations are said to be single nucleotide variations (SNVs), this is a more realistic model. However, the results do not differ considerably at small mutation rates. The deviation in both lineage- and clone turnover from Poisson distributed mutation numbers is highest at death rate *d=0* and decays for increasing *d*.
 
 ## Results
-<img src="turnover_plots/orphaned_turnover.png" alt="lineage turnover" width="350"/>
+<img src="turnover_plots/theory/orphaned_turnover.png" alt="lineage turnover" width="350"/>
 
-![lineage turnover](turnover_plots/orphaned_turnover_series.png)  
+![lineage turnover](turnover_plots/theory/orphaned_turnover_series.png)  
 **Lineage turnover** - Fractions of orphaned lineages from simulations (blue markers) plotted together with the analytical turnover curve (red line) for different mutation rates. Lineage turnover is independent from mutation rates and the measured curves coincide. Simulations were run with 200 to 800 repetitions, birth rate *a=1.*, a threshold of 2000 cells and final size of 6000. Error bars indicate standard deviation.
 
-<img src="turnover_plots/estranged_turnover_expected.png" alt="Expected clone turnover" width="350"/>
+<img src="turnover_plots/theory/estranged_turnover_expected.png" alt="Expected clone turnover" width="350"/>
 
-![Expected clone turnover](turnover_plots/estranged_turnover_expected_series.png)  
+![Expected clone turnover](turnover_plots/theory/estranged_turnover_expected_series.png)  
 **Expected clone turnover** - Expected fraction of estranged lineages / clones from simulations (blue markers) plotted together with the analytical turnover curve (red line) for different mutation rates. A lineage's / clone's expected probability of becoming estranged to the parental clone is computed as `q^n`, with `q` being the clone extinction probability and `n` parental clone size at birth. Simulations were run with 200 to 500 repetitions, birth rate *a=1.* and time thresholds corresponding to a threshold size of 200 cells i.e. *T=log(200)/(a-b)*. Error bars indicate standard deviation.
 
-<img src="turnover_plots/estranged_turnover_measured.png" alt="Measured clone turnover" width="350">
+<img src="turnover_plots/theory/estranged_turnover_measured.png" alt="Measured clone turnover" width="350">
 
-![Measured clone turnover](turnover_plots/estranged_turnover_measured_series.png)  
+![Measured clone turnover](turnover_plots/theory/estranged_turnover_measured_series.png)  
 **Measured clone turnover** - Fractions of estranged lineages / clones from simulations (blue markers) plotted together with the analytical turnover curve (red line) for different mutation rates. Simulations were run with 400 to 1200 repetitions, birth rate *a=1.*, a threshold of 200 cells and final size of 2000. Error bars indicate standard deviation.
+
+## Inference
+Using the analytical results we can infer both death rate `b` and mutation rate `μ` for a given tumor and set frequency threshold `N`. Measuring its `lineage turnover` gives us an estimate of the lineage extinction probability. <br>
+`q = b/a = 2log(N)(1-N^(-2))^-1*W_l ≈ 2log(N)*W_l`
+
+As observed for simulations measured lineage turnover deviates from the theoretical result for high death rates `b` and low threshold size `N`. In cases where the estimated lineage extinction probability `q` does not fall below one the mutation rate cannot be inferred. However, using the results from simulations for the lineage turnover might allow a better estimation of `q`.
+
+Using the inferred value of `b` there are two ways of obtaining the mutation rate `μ` by the clone turnover. The first and straight forward way is to determine the value of `μ` at which the theoretical clone turnover curve for given `b` assumes the measured turnover. Here the threshold time is to be estimated by `T=log(N)/(a-b)`. The other option is to (uniformly) subsample the set of sequenced mutations or consider smaller parts of the genome and thus effectively reduce the mutation rate. A mutation is selected with probability `L`, for each value of `L` the tumor can be sampled several times and the mean clone turnover computed. One obtains a pseudo clone turnover curve which can be fitted against the analytical result. Although the sets of mutations all share the same background and the curve keeps the tumors deviation from the expected clone turnover the fit generally results in a better match.  
+
+Note: With the estimated lineage extinction probability `q` the (scaled) mutation rate `μ` can also be determined from the cumulative distribution of inverse frequencies (sottoriva plot). For an exponentially growing tumor under neutral evolution this curve is linear and the slope is given by `μ/(1-q)`.
+
+
+![Inference - `b` dependence](turnover_plots/inference/vary_d_solve.png)  
+**Inference - `b` dependence** - Inference of death `b` and mutation rate `μ` for single tumors at fixed `μ`. Mutation rate is inferred using the estimated `b` by computing the tumors clone turnover `W_c` and comparing to the theoretical curve. For each death rate we simulate 10 tumors at `a = 1.0`, `μ = 0.2`, threshold size `N = 2000` and final size 100000. However, at `b = 0.7` two and at `b = 0.8` four of these show high lineage turnover such that `b` cannot be estimated and are excluded. Error bars indicate standard deviation.
+
+![Inference with fit - `b` dependence](turnover_plots/inference/vary_d_fit.png)
+**Inference with fit- `b` dependence** - Inference of death `b` and mutation rate `μ` for single tumors at fixed `μ`. Mutation rate is inferred using the estimated `b` by subsampling mutations thus effectively reducing the mutation rate, computing the clone turnover for each subset and fitting the resulting pseudo-turnover curve to the analytical curve. For each death rate we simulate 10 tumors at `a = 1.0`, `μ = 0.2`, threshold size `N = 2000` and final size 100000.  However, at `b = 0.7` two and at `b = 0.8` four of these show high lineage turnover such that `b` cannot be estimated and are excluded. The set of mutations is subsampled at probabilities `L = 0.1, 0.2..., 1.0` with 10 repetitions each. Error bars indicate standard deviation.
+
+![Inference - `μ` dependence](turnover_plots/inference/vary_mu_solve.png)
+**Inference - `μ` dependence** - Inference of death `b` and mutation rate `μ` for single tumors at fixed `b`. Mutation rate is inferred using the estimated `b` by computing the tumor's clone turnover `W_c` and comparing to the theoretical curve. For each death rate we simulate 10 tumors at `a = 1.0`, `b = 0.4`, threshold size `N = 2000` and final size 100000. Error bars indicate standard deviation.
+
+![Inference with fit - `μ` dependence](turnover_plots/inference/vary_mu_fit.png)  
+**Inference with fit- `μ` dependence** - Inference of death `b` and mutation rate `μ` for single tumors at fixed `b`. Mutation rate is inferred using the estimated `b` by subsampling mutations thus effectively reducing the mutation rate, computing the clone turnover for each subset and fitting the resulting pseudo-turnover curve to the analytical curve. For each death rate we simulate 10 tumors at `a = 1.0`, `b = 0.4`, threshold size `N = 2000` and final size 100000. The set of mutations is subsampled at probabilities `L = 0.1, 0.2..., 1.0` with 10 repetitions each. Error bars indicate standard deviation.

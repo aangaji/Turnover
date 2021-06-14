@@ -15,9 +15,9 @@ mutable struct Haplotype
     t_birth :: Float64
     parent :: Int
 end
-    
 
-"""  
+
+"""
     neutral_growth!(tumor, obs, endsize, T=Inf; b, d, μ, t=0., Nthresh=endsize, Tthresh = Inf )
     neutral_growth!(tumor, endsize, T=Inf; b, d, μ, t=0., Nthresh=endsize, Tthresh = Inf )
 
@@ -33,7 +33,7 @@ Kwargs are `b` birth-rate, `d` death-rate, `μ` mutation-rate, `t` current time,
 Output is a named Tuple `(:tumor, :obs, :N, :t)` containing the final `Haplotype` Vector, observables, endsize and final time.
 """
 function neutral_growth!(tumor::Vector{Haplotype}, obs::Matrix, endsize::Int, T=Inf; b, d, μ, t=0., Nthresh=endsize, Tthresh = T, showprogress=true )
-    
+
     mutID = length(tumor)-1
     obsarr = collect.(eachrow(obs))
     obstemp = Vector{Int}(undef, size(obs,2))
@@ -51,7 +51,7 @@ function neutral_growth!(tumor::Vector{Haplotype}, obs::Matrix, endsize::Int, T=
 
         t += rand(Exponential(1.))/((b+d)*N)
         if p > d
-            
+
             mnew =  (rand()<μp/2) + (rand()<μp/2)
             for n=1:mnew
                 mutID += 1
@@ -84,12 +84,12 @@ function neutral_growth!(tumor::Vector{Haplotype}, obs::Matrix, endsize::Int, T=
     for i=1:size(obs,2)
         obs[:, i] = getindex.(obsarr, i)
     end
-    
+
     return (tumor=tumor, obs=obs, N=N, t=t)
 end
 
 function neutral_growth!(tumor::Vector{Haplotype}, endsize::Int, T=Inf; b, d, μ, t=0., Nthresh=endsize, Tthresh = T, showprogress=true )
-    
+
     mutID = length(tumor)-1
     F = cumsum(getfield.(tumor,:n))
     N = last(F)
@@ -105,7 +105,7 @@ function neutral_growth!(tumor::Vector{Haplotype}, endsize::Int, T=Inf; b, d, μ
 
         t += rand(Exponential(1.))/((b+d)*N)
         if p > d
-            
+
             mnew =  (rand()<μp/2) + (rand()<μp/2)
             for n=1:mnew
                 mutID += 1
@@ -129,9 +129,9 @@ function neutral_growth!(tumor::Vector{Haplotype}, endsize::Int, T=Inf; b, d, μ
 
         if showprogress ProgressMeter.update!(prog, N) end
     end
-    
+
     return (tumor=tumor, N=N, t=t)
-    
+
 end
 
 
