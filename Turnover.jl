@@ -3,10 +3,10 @@ module Turnover
     using DataFrames
     using TumorGrowth: clones_by_mutations
 
-    export reduced_μ, reduced_μ!, remove_mutations, remove_mutations!
+    export mfreqs, reduced_μ, reduced_μ!, remove_mutations, remove_mutations!
     export W_orphaned, W_estranged
     export estranged, estranged_treeless, estranged_expected
-    export orphaned_red, orphaned_green, orphaned_red_treeless, orphaned_green_treeless, orphaned_green_expected
+    export orphaned_red, orphaned_green, orphaned_red_treeless, orphaned_green_treeless, orphaned_red_expected, orphaned_green_expected
 
     ##########################
     ### Neutral Simulation ###
@@ -14,6 +14,7 @@ module Turnover
 
     include("neutral_haplotype_growth_v2.jl")
 #     include("neutral_haplotype_growth_v2_removedead.jl")
+    include("neutral_haplotype_growth_clones_v2.jl")
 
     """
         remove_mutations!(htumor, keep)
@@ -303,6 +304,25 @@ module Turnover
     end
 
     """
+        orphaned_red_expected(q, clonesizes, nbirth)
+
+    Expected orphaned turnover considering full ancestry of a mutant clone. Given extinction probability `q` and observed ancestral clone sizes at birth `nbirth` an offspring mutation `m` is expected to be orphaned with respect to an ancestor of size `n` at birth of `m` with probability `q^n`.
+    The function returns the probability of being orphaned for all offspring mutations as
+
+        DataFrame( mutation :: Vector{Int}, isorphaned :: Vector{Float64})
+    """
+    function orphaned_red_expected(q, clonesizes, nbirth)
+        extant = filter(m -> !iszero(clonesizes[m]) && !isempty(nbirth[m]), 1:length(nbirth))
+        orphans = DataFrame(mutation = Int[], isorphaned = Float64[])
+        for m_green in extant
+            parentsizes = nbirth[m_green]
+            append!( orphans.mutation, fill(m_green, length(parentsizes)) )
+            append!( orphans.isorphaned, q .^ parentsizes)
+        end
+        return orphans
+    end
+
+    """
         orphaned_green_expected(htumor, q, nbirth)
 
     Expected orphaned turnover based on offspring mutations on **complete (!) haplotype-tumors**,
@@ -348,3 +368,26 @@ module Turnover
         return DataFrame(  mutation = mutations, isestranged = q .^ nbirth[mutations])
     end
 end  # module Turnover
+
+# function estranged_treeless_v2(htumor)
+#     clones, mutations = clones_by_mutations(htumor)
+#     m_indices = Dict(mutations .=> 1:length(mutations))
+#     htypes = filter(h-> length(h)>1, htumor.mutations)
+#     out = DataFrame(  clone = htypes, isestranged = Vector{Bool}(undef, length(htypes)) )
+#
+#     for (i,h) in enumerate(htypes)
+#         n = length(h)
+#         isestranged = true
+#         for m in h
+#             isestranged || break
+#             for potential_parent in clones[m_indices[m]].mutations
+#                 if length(potential_parent) == n-1 && isone(length(setdiff(h, potential_parent)))
+#                     isestranged = false
+#                     break
+#                 end
+#             end
+#         end
+#         out.isestranged[i] = isestranged
+#     end
+#     return out
+# end
