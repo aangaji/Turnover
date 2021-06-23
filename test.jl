@@ -58,8 +58,8 @@ using .Turnover
         orphaned_green_expected(htumor, d/b, out[:obs][:,2])
 
         htumor, clonesizes, nbirth, N, t = neutral_growth_clones(1000; params..., showprogress=false)
-        @test isapprox( mean( (d/b) .^ vcat(nbirth[.!iszero.(clonesizes)]...) ),
-                        mean( orphaned_red_expected(d/b, clonesizes, nbirth).isorphaned ) )
+        @test isapprox( mean( (d/b) .^ vcat(nbirth...) ),
+                        mean( orphaned_red_expected(d/b, nbirth).isorphaned ) )
 
     end
 end

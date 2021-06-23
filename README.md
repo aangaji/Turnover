@@ -1,4 +1,12 @@
 # Turnover
+
+> *Possible inconsistencies:*
+> - *haplotype - clone*
+> - *clone - lineage*
+> - *b - a (birth rate)*
+> - *d - b (death rate)*
+> - *μ - 2μ (mutation rate per cell division)*
+
 ## Theory
 
 > #### lineage turnover
@@ -24,6 +32,19 @@ For the clone turnover we additionally measured the expected fraction of estrang
 Determining whether a mutant lineage is orphaned or estranged is straight forward with knowledge of the complete genealogical tree of a all mutations. If the order of occurrence is unknown this is not possible in the case of subsequent mutations that become clonal to a lineage. Nevertheless the fraction of orphaned / estranged lineages and thus the turnover can still be computed exactly with an appropriate algorithm.
 
 We also considered the number of mutations arising at division to be distributed as `~ Poisson(μ)`. If mutations are said to be single nucleotide variations (SNVs), this is a more realistic model. However, the results do not differ considerably at small mutation rates. The deviation in both lineage- and clone turnover from Poisson distributed mutation numbers is highest at death rate *d=0* and decays for increasing *d*.
+
+## Treeless turnover
+
+Both the clone and the lineage turnover parameter have straightforward interpretations. The clone turnover gives the fraction of genotypes whose parental genotype is no longer extant. The lineage turnover gives (averaged over the different lineages) the fraction of lineages that coincide with their ancestral lineage.
+
+<img src="drawing.png" alt="Treeless turnover" width="350"/> <br>
+**Treeless turnover** - An exemplary genealogical tree illustrating the idea behind the `treeless turnover` algorithm. Mutations `3, 4` (in red) have the same surviving lineage with the same truncal mutations `{1,2,3,4,5}` where `{1,2}` are not private but have their own distinct surviving clones. Even without knowing the order of occurence we find that one out of {3,4}` is estranged (`5`) and three are orphaned (`3` wrt. `2` and `4` wrt. `3` and `2`).
+
+These observables are best illustrated with an example. We consider a population in which mutations `1, 2, 3, 4, 5` arose in that order (the order is given only to illustrate the example). In this population, clones carrying mutations `{}`, `{1}`, `{1, 2, 3, 4}`, `{1, 2, 3, 4, 5}` survived. Clone `{1}` has an extant parental genotype, namely `{}`. None of the extant genotypes carry exactly three mutations out of `{1, 2, 3, 4}`. The parental clone of this genotype thus became extinct. Finally genotype `{1, 2, 3, 4, 5}` has an extant parent in `{1, 2, 3, 4}`. Hence two out of three clones have extant parents, resulting in a clone turnover of `Wc = 2/3`. In order to compute the lineage turnover we go over all mutations `1, 2, 3, 4, 5`, which each define a lineage. The only ancestral lineage of mutant `1` is the original lineage which gave birth to all lineages. The clone `{}` survived, therefore lineage `1` does not coincide with its ancestor. Mutation `1` hence contributes one to the denominator and zero to the numerator of the lineage turnover. Mutation `2` does not coincide with either of its two ancestral lineages (origin and `1`) and thus adds two to the denominator and zero to the numerator. Mutation `3` is again not clonal on the original lineage and `1`, but it coincides with `2`. Its contribution to the lineage turnover is three in the denominator and one in  the numerator. The same goes for the lineage of `4`, which in addition coincides with `3`, resulting in a contribution of four to the denominator and two to the numerator. Lastly, lineage `5` has the original lineage and mutants `1, 2, 3, 4` as ancestoral lineages and coincides with neither of them, adding five to the denominator and zero to the numerator. The lineage turnover is hence `W_l = 3/15 = 1/5`.
+
+This direct procedure assumes that we know the order in which the mutations occured, but in fact the lineage turnover can be computed without knowledge of the phylogenetic tree. For a given mutant lineage m we first identify the clonal set of mutations (also called the **trunk**; mutations which always co-occur with m) and the so-called **private subset** of truncal mutations; those truncal mutations which are unique to that lineage. The ancestors are all represented in the trunk, but m can only be clonal on ancestors which are part of its private subset. We do not know the order in which the mutations in the private subset arose, but we can compute a combined contribution to the lineage turnover. Unique trunks contribute `r(r−1)/2+r(t−r+1)` and `r(r−1)/2` to the denominator and the numerator of the lineage turnover respectively, where `r` is the size of the private subset and `t` the size of the trunk.
+
+In the given example, mutations `2, 3, 4` have a common trunk `{1, 2, 3, 4}` of size t = 4 with r = 3 private truncal mutations `{2, 3, 4}`. They together add nine to the denominator and three to the numerator. Mutant `1` has `r = t = 1` and thus contributes zero to the numerator and one to the denominator, mutant 5 has `t = 5` and `r = 1`, contributing zero to the numerator and 5 to the denominator, yielding the same lineage turnover as above.
 
 ## Results
 <img src="turnover_plots/theory/orphaned_turnover.png" alt="lineage turnover" width="350"/>
@@ -63,16 +84,3 @@ Note: With the estimated lineage extinction probability `q` the (scaled) mutatio
 
 ![Inference with fit - `μ` dependence](turnover_plots/inference/vary_mu_fit.png)  <br>
 **Inference with fit- `μ` dependence** - Inference of death `b` and mutation rate `μ` for single tumors at fixed `b`. Mutation rate is inferred using the estimated `b` by subsampling mutations thus effectively reducing the mutation rate, computing the clone turnover for each subset and fitting the resulting pseudo-turnover curve to the analytical curve. For each death rate we simulate 10 tumors at `a = 1.0`, `b = 0.4`, threshold size `N = 2000` and final size 100000. The set of mutations is subsampled at probabilities `L = 0.1, 0.2..., 1.0` with 10 repetitions each. Error bars indicate standard deviation.
-
-
-## Treeless turnover
-
-For the simulated populations the mutations' order of occurrence is known and the computation of both lineage and clone turnover is straight forward. Regarding clone turnover, given an extant mutation one only needs to consider the most recent ancestral clones. For the lineage turnover we shift perspective to ancestral clones. Given a mutant lineage we go over all mutant offspring lineages that appeared on this background and count them as orphaned if they are clonal.
-However, for real tumors the genealogy is a priori unknown. A problem arises when a mutant `m_2` appears on and sweeps through its parental lineage `m_1` we cannot tell which one of them is estranged or orphaned. For instance `m_1` could be considered orphaned with respect to `m_2` since its lineage makes up all of the `m_2` lineage.
-
-Nevertheless, even in such cases we know the number of estranged or orphaned lineages and knowledge of the complete genealogy is not required in order to compute turnover. We therefore defined `treeless` algorithms which compute turnover for unsorted haplotypes. The idea behind the method is the following. For a given mutant lineage `m` we first identify its truncal i.e. clonal set of mutations (the `trunk`) and then the private subset of truncal mutations which are unique to the lineage. The latter is a series of sweeps following the branching point of the lineage `m` (the point in the genealogical tree at which the lineage `m` branches off its most recent surviving ancestral lineage). In the case where the subset only contains `m` itself `m` is simply estranged/orphaned or not. But if it contains other clonal mutations we know that only one can be estranged, because the other clones are extinct. Also, all mutants (expect for the first one) in the subset are orphaned with respect to the ones situated before them within the subset. This is because a subset mutation is clonal to all previous subset mutations. In the example from before $m_2$ is orphaned wrt. `m_1` and if a third mutant `m_3` became clonal on the background of `m_2` it would be an orphan to both `m_2` and `m_1`. Then `m` as well as the other mutants of the subset are assigned a weight such that they eventually add up to the right number of estranged/orphaned mutants.  
-
-We can illustrate this explicitly in the following simple example. A population gave rise to the lineages `1, 2, 3, 4, 5` within which the clones `{1}, {1,2}, {1,2,3,4,5} ` survived. Mutation `1` has trunk `{1}` and therefore no ancestor. Mutation `2` has trunk `{1,2}`, private subset `{2}` and is neither estranged nor orphaned. Mutations `3, 4, 5` on the other hand all have trunk `{1,2,3,4,5}` and private subset `{3,4,5}`. The trunk itself survived as a clone, thus one of the three mutations is estranged. The orphan count is `sum^t_{n=0} n = t*(t-1)/2 = 3` where `t` is the subset size.
-
-<img src="drawing.png" alt="Treeless turnover" width="350"/> <br>
-**Treeless turnover** - An exemplary genealogical tree illustrating the idea behind the `treeless turnover` algorithm. Mutations `3, 4, 5` (in red) have the same surviving lineage with the same truncal mutations `{1,2,3,4,5}` where `{1,2}` are not private but have their own distinct surviving clones. Even without knowing the order of occurence we find that one out of {3,4,5} is estranged (`5`) and three are orphaned (`4` wrt. `3` and `5` wrt. `3` and `4`).

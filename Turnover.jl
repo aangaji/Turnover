@@ -311,8 +311,8 @@ module Turnover
 
         DataFrame( mutation :: Vector{Int}, isorphaned :: Vector{Float64})
     """
-    function orphaned_red_expected(q, clonesizes, nbirth)
-        extant = filter(m -> !iszero(clonesizes[m]) && !isempty(nbirth[m]), 1:length(nbirth))
+    function orphaned_red_expected(q, nbirth)
+        extant = filter(m -> !isempty(nbirth[m]), 1:length(nbirth))
         orphans = DataFrame(mutation = Int[], isorphaned = Float64[])
         for m_green in extant
             parentsizes = nbirth[m_green]
