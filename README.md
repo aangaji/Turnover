@@ -66,6 +66,9 @@ In the given example, mutations `2, 3, 4` have a common trunk `{1, 2, 3, 4}` of 
 Using the analytical results we can infer both death rate `b` and mutation rate `μ` for a given tumor and set frequency threshold `N`. Measuring its `lineage turnover` gives us an estimate of the lineage extinction probability. <br>
 `q = b/a = 2log(N)(1-N^(-2))^-1*W_l ≈ 2log(N)*W_l`
 
+![Lineage turnover: infer q](turnover_plots/inference/solve_for_q.png)
+![Clone turnover: infer μ](turnover_plots/inference/solve_for_mu.png)
+
 As observed for simulations measured lineage turnover deviates from the theoretical result for high death rates `b` and low threshold size `N`. In cases where the estimated lineage extinction probability `q` does not fall below one the mutation rate cannot be inferred. However, using the results from simulations for the lineage turnover might allow a better estimation of `q`.
 
 Using the inferred value of `b` there are two ways of obtaining the mutation rate `μ` by the clone turnover. The first and straight forward way is to determine the value of `μ` at which the theoretical clone turnover curve for given `b` assumes the measured turnover. Here the threshold time is to be estimated by `T=log(N)/(a-b)`. The other option is to (uniformly) subsample the set of sequenced mutations or consider smaller parts of the genome and thus effectively reduce the mutation rate. A mutation is selected with probability `L`, for each value of `L` the tumor can be sampled several times and the mean clone turnover computed. One obtains a pseudo clone turnover curve which can be fitted against the analytical result. Although the sets of mutations all share the same background and the curve keeps the tumors deviation from the expected clone turnover the fit generally results in a better match.  
