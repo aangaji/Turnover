@@ -144,7 +144,7 @@ for kwargs.
 Output is a named Tuple `(:tumor, :N, :t)` containing the final `Haplotype` Vector, endsize and final time. <br>
 If `return_obs` is `true` observables are recorded during simulation and additionally returned under the key `:obs`.
 """
-function neutral_growth(endsize, T=Inf; return_obs::Bool, args... )
+function neutral_growth(endsize::Int, T=Inf; return_obs::Bool, args... )
     mutID = 0
     tumor = [Haplotype(SVector{0, Int}(), 1, 0., 0 )]
     obs = Matrix{Int}(undef, 0, 3)

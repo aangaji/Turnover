@@ -10,7 +10,7 @@ using Test
 using .Turnover
 @testset "Applying turnover methods" begin
 
-    using DataFrames
+    using DataFrames, Statistics
 
     b, d, μ = params = (b=1., d=0.8, μ=0.1)
     @testset "simulation" begin

@@ -89,7 +89,7 @@ In some instances the measured clade turnover is higher than the theoretical val
 ![Inference - `μ` dependence](turnover_plots/inference/vary_mu_solve.png)  <br>
 **Inference - `μ` dependence** - Inference of death `b` and mutation rate `μ` for single tumors at fixed `b`. Mutation rate is inferred using the estimated `b` by computing the tumor's clone turnover `W_c` and comparing to the theoretical curve. For each death rate we simulate 10 tumors at `a = 1.0`, `b = 0.4`, threshold size `N = 2000` and final size 100000. Error bars indicate standard deviation.
 
-![Inference with fit - `μ` dependence](turnover_plots/inference/vary_mu_fit.png)  <br>
+![Inference for sampled spatial data](turnover_plots/inference/vary_mu_fit.png)  <br>
 **Inference with fit- `μ` dependence** - Inference of death `b` and mutation rate `μ` for single tumors at fixed `b`. Mutation rate is inferred using the estimated `b` by subsampling mutations thus effectively reducing the mutation rate, computing the clone turnover for each subset and fitting the resulting pseudo-turnover curve to the analytical curve. For each death rate we simulate 10 tumors at `a = 1.0`, `b = 0.4`, threshold size `N = 2000` and final size 100000. The set of mutations is subsampled at probabilities `L = 0.1, 0.2..., 1.0` with 10 repetitions each. Error bars indicate standard deviation.
 
 ![Inference with fit - `μ` dependence](turnover_plots/inference/inference_spatial_N400_n270.png)  <br>
