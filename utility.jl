@@ -1,17 +1,35 @@
-function sampletumor_mfreqs(sampletumor)
-    mutations = unique( vcat(sampletumor.mutations...) )
-    m_ind = Dict(mutations .=> 1:length(mutations))
-    freqs = zeros(length(mutations))
-    for row in eachrow(sampletumor)
-        for (m,f) in zip(row.mutations, row.frequencies)
-            freqs[m_ind[m]] += f
-        end
-    end
-    freqs./=nrow(sampletumor)
-    return DataFrame(mutation = mutations, frequency=freqs)
-end
+# already in TumorGrowth: remove
+# function sampletumor_mfreqs(sampletumor)
+#     mutations = unique( vcat(sampletumor.mutations...) )
+#     m_ind = Dict(mutations .=> 1:length(mutations))
+#     freqs = zeros(length(mutations))
+#     for row in eachrow(sampletumor)
+#         for (m,f) in zip(row.mutations, row.frequencies)
+#             freqs[m_ind[m]] += f
+#         end
+#     end
+#     freqs./=nrow(sampletumor)
+#     return DataFrame(mutation = mutations, frequency=freqs)
+# end
 
-function get_turnover(tumorinfo; useknown_N = false, useknown_T = false, Nthresh_orph, Nthresh_estr, tumor_sample_func = df -> df, mut_freqs_func = TumorGrowth.mutation_freqs)
+# function bisection(f, interval, iter; precision=1e-9)
+#     xlow, xup = interval
+#     sign(f(xlow)) == sign(f(xup)) && error("no zero in interval $interval")
+#     any((isnan.(f.(interval)))) && error("f not defined on interval $interval")
+#     for i=1:iter
+#         xm = (xlow+xup)/2
+#         abs(f(xm)) < precision && return (xm, i)
+#         if sign(f(xm)) != sign(f(xlow))
+#             xup = xm
+#         else
+#             xlow = xm
+#         end
+#     end
+#     println(xup)
+#     error("no convergence within $iter steps")
+# end
+
+function get_turnover(tumorinfo; useknown_N = false, useknown_T = false, Nthresh_orph, Nthresh_estr, tumor_sample_func = df -> df, mut_freqs_func = TumorGrowth.mutation_freqs, subsample_func = df -> df)
     clade_turnover = Float64[]
     clone_turnover = Float64[]
 
@@ -20,16 +38,17 @@ function get_turnover(tumorinfo; useknown_N = false, useknown_T = false, Nthresh
         tumor, mutations, b, d= tumor_sample_func( sim.tumor ), sim.mutations, sim.b, sim.d
 
         htypes = unique(tumor.mutations)
+        survivors = unique!(vcat(htypes...))
         freqs = if useknown_N
-            Dict( 1:nrow(mutations) .=> 1 ./ mutations.N_birth )
+            Dict( survivors .=> 1 ./ mutations.N_birth[survivors] )
         elseif useknown_T
-            Dict( 1:nrow(mutations) .=> @. 1 / exp( (b-d)*mutations.t_birth ) )
+            Dict( survivors .=> @. 1 / exp( (b-d)*mutations.t_birth[survivors] ) )
         else
             mut_freqs_func(tumor) |> seq -> Dict(seq.mutation .=> seq.frequency)
         end
 
-        orphaned_tumor = DataFrame( mutations = unique( filter.(m-> freqs[m] > 1/Nthresh_orph, htypes) ) )
-        estranged_tumor = DataFrame(mutations = filter( muts -> all(  freqs[m] > 1/Nthresh_estr for m in muts), htypes) )
+        orphaned_tumor = DataFrame( mutations = unique( filter.(m-> freqs[m] > 1/Nthresh_orph, htypes) ) ) |> subsample_func
+        estranged_tumor = DataFrame(mutations = filter( muts -> all(  freqs[m] > 1/Nthresh_estr for m in muts), htypes) ) |> subsample_func
 
         W_a = Turnover.orphaned_red_treeless(orphaned_tumor) |> df -> sum(df.isorphaned)/sum(df.isgreen)
 
@@ -111,7 +130,7 @@ function plot_turnover_violin(ds, Wa, Wo; Nthresh_orph, Nthresh_estr, b=1., mu, 
     d_uni = unique(ds)
     bins = [findall(isequal(d), ds) for d in d_uni]
     
-    p = plot(layout=(1,2), size=(600,250), legend=:none, margin=3Plots.mm, xlab=L"d", xticks=(0:scalex, 0.:1/scalex:1.), plotargs...)
+    p = plot(; layout=(1,2), size=(600,250), legend=:none, margin=3Plots.mm, xlab=L"d", xticks=(0:scalex, 0.:1/scalex:1.), plotargs...)
 
     scatter!(p[1], ds*scalex, Wa, ylab=L"W_{a}", alpha=0.2, ms = 3, c=:darkblue, ylim=(0,0.3))
     violin!(p[1], ds*scalex, Wa, marker = (5, 0.2, :darkblue), alpha=0.4, c=:lightblue)
@@ -129,7 +148,7 @@ function plot_infresult_violin(ds, dfits, mufits; mu, size=(600,300), plotargs..
     d_uni = unique(ds)
     bins = [findall(isequal(d), ds) for d in d_uni]
     
-    p = plot(layout=(1,2), size=size, legend=:none, margin=3Plots.mm, yguidefontrotation=-90,
+    p = plot(; layout=(1,2), size=size, legend=:none, margin=3Plots.mm, yguidefontrotation=-90,
              aspect = scalex, xlab=L"d", yaxis=((0,1),0:0.2:1), xticks=(0:scalex, 0.:1/scalex:1.), plotargs...)
 
     scatter!(p[1], ds*scalex, dfits, ylab=L"d_\mathrm{fit}", marker = (5, 0.2, :darkblue), alpha=0.4)
