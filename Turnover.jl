@@ -71,7 +71,7 @@ module Turnover
     Assumes **Branchingprocess `v2`**: independent mutation of offspring pair at division. `μ` is the probability of mutation per cell division.
     The mutation probability per cell division per cell is `μ/2`.
     """
-    W_estranged(d; b, μ, T) = (μ/2)*(d + (μ/2)^2) / (1-(μ/2))^2 / (b*(1-μ/2)-d) * (1-exp(-2*(b-d-b*μ/2)*T)) / (1-exp(-2*b*μ/2*T))
+    W_estranged(d; b, μ, T) = (μ/2)*(d + b*(μ/2)^2) / (1-(μ/2))^2 / (b*(1-μ/2)-d) * (1-exp(-2*(b-d-b*μ/2)*T)) / (1-exp(-2*b*μ/2*T))
 
     #########################
     ### METHODS WITH TREE ###
