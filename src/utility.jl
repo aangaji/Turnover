@@ -25,7 +25,7 @@ end
 
 function get_turnover(tumorinfo; 
         useknown_N = false, useknown_T = false, f_min, 
-        tumor_sample_col = :tumor,
+        tumor_sample_col = :tumor, sample_freq_col = nothing,
         tumor_sample_func = df -> df, mut_freqs_func = TumorGrowth.mutation_freqs, subsample_func = df -> df)
     
     clade_turnover = Float64[]
@@ -46,8 +46,10 @@ function get_turnover(tumorinfo;
             Dict( survivors .=> 1 ./ mutations.N_birth[survivors] )
         elseif useknown_T
             Dict( survivors .=> @. 1 / exp( (b-d)*mutations.t_birth[survivors] ) )
+        elseif isnothing(sample_freq_col)
+            mut_freqs_func(tumor) |> seq -> Dict(seq.mutation .=> seq.frequency)           
         else
-            mut_freqs_func(tumor) |> seq -> Dict(seq.mutation .=> seq.frequency)
+            Dict( 1:nrow(mutations) .=> getproperty(mutations, sample_freq_col) )   
         end
 
         orphaned_tumor = DataFrame( mutations = unique( filter.(m-> freqs[m] > f_min, htypes) ) ) |> subsample_func
