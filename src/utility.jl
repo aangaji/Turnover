@@ -106,6 +106,7 @@ function infer_params( tumorinfo; N, Wa, Wo, usecorrection=true, estimate_N = tr
 end
 
 function plot_turnover_violin(ds, Wa, Wo; N, mu=nothing, mus = fill(mu,length(ds)),
+        distribution! = violin!, dots! = scatter!,
         usecorrection = true, xlim=[0,1.1], scalex=5, plotargs...)
     d_uni = unique(ds)
     bins = [findall(isequal(d), ds) for d in d_uni]
@@ -116,13 +117,13 @@ function plot_turnover_violin(ds, Wa, Wo; N, mu=nothing, mus = fill(mu,length(ds
             xticks=(ceil(scalex*xlim[1]):scalex, ceil(scalex*xlim[1])/scalex:1/scalex:1), 
             xlim=scalex*xlim, plotargs...)
 
-    scatter!(p[1], ds*scalex, Wa, ylab=L"W_{a}", alpha=0.2, ms = 3, c=:darkblue, ylim=(0,0.3))
-    violin!(p[1], ds*scalex, Wa, marker = (5, 0.2, :darkblue), alpha=0.4, c=:lightblue)
+    dots!(p[1], ds*scalex, Wa, ylab=L"W_{a}", alpha=0.2, ms = 3, c=:darkblue, ylim=(0,0.3))
+    distribution!(p[1], ds*scalex, Wa, marker = (5, 0.2, :darkblue), alpha=0.4, c=:lightblue)
     scatter!(p[1], d_uni*scalex, [median(Wa[bin]) for bin in bins], marker=(:hline, 3*scalex, :darkblue) )
     plot!(p[1], (xlim[1]:0.01:min(1.,xlim[2]))*scalex, d -> Turnover.W_orphaned(d/scalex; N=N * corr(d/scalex)))
 
-    scatter!(p[2], ds*scalex, Wo, ylab=L"W_{o}", alpha=0.5, ms = 3, c=:black, ylim=(0,1))
-    violin!(p[2], ds*scalex, Wo, marker = (5, 0.2, :darkblue), alpha=0.4, c=:lightblue)
+    dots!(p[2], ds*scalex, Wo, ylab=L"W_{o}", alpha=0.5, ms = 3, c=:black, ylim=(0,1))
+    distribution!(p[2], ds*scalex, Wo, marker = (5, 0.2, :darkblue), alpha=0.4, c=:lightblue)
     scatter!(p[2], d_uni*scalex, [median(Wo[bin]) for bin in bins], marker=(:hline, 3*scalex, :darkblue))
     
     for m in unique(mus)
@@ -134,6 +135,7 @@ function plot_turnover_violin(ds, Wa, Wo; N, mu=nothing, mus = fill(mu,length(ds
 end
 
 function plot_infresult_violin(ds, dfits, mufits; mu=nothing, mus = fill(mu,length(ds)), size=(600,300), 
+        distribution! = violin!, dots! = scatter!,
         scalex=5, xlim=[0,1.1], ylim_d=(0,1), ylim_mu=(0,1), plotargs...)
 
     d_uni = unique(ds)
@@ -145,14 +147,14 @@ function plot_infresult_violin(ds, dfits, mufits; mu=nothing, mus = fill(mu,leng
             xlim=scalex*xlim, plotargs...)
 
     plot!( p[1], yaxis=(ylim_d,0:0.2:1))
-    scatter!(p[1], ds*scalex, dfits, ylab=L"d_\mathrm{fit}", marker = (5, 0.2, :darkblue), alpha=0.4)
-    violin!(p[1], ds*scalex, dfits, marker = (5, 0.2, :darkblue), alpha=0.4, c=:lightblue)
+    dots!(p[1], ds*scalex, dfits, ylab=L"d_\mathrm{fit}", marker = (5, 0.2, :darkblue), alpha=0.4)
+    distribution!(p[1], ds*scalex, dfits, marker = (5, 0.2, :darkblue), alpha=0.4, c=:lightblue)
     scatter!(p[1], d_uni*scalex, [median(dfits[bin]) for bin in bins], marker=(:hline, 3*scalex, :darkblue) )
     plot!(p[1], scalex*xlim, xlim, lw=2, c=:red)
     
     plot!( p[2], yaxis=(ylim_mu,0:0.2:1))
-    scatter!(p[2], ds*scalex, mufits, ylab=L"\mu_\mathrm{fit}", marker = (5, 0.2, :darkblue), alpha=0.4)
-    violin!(p[2], ds*scalex, mufits, marker = (5, 0.2, :darkblue), alpha=0.4, c=:lightblue)
+    dots!(p[2], ds*scalex, mufits, ylab=L"\mu_\mathrm{fit}", marker = (5, 0.2, :darkblue), alpha=0.4)
+    distribution!(p[2], ds*scalex, mufits, marker = (5, 0.2, :darkblue), alpha=0.4, c=:lightblue)
     scatter!(p[2], d_uni*scalex, [median(mufits[bin]) for bin in bins], marker=(:hline, 3*scalex, :darkblue))
     hline!(p[2], [mu], c=:red, lw = 2)
     # scatter!(p[2], ds*scalex, mus, c=:red, marker=:hline, ms=15)
