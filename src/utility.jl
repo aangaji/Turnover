@@ -27,6 +27,7 @@ function get_turnover(tumorinfo;
         useknown_N = false, useknown_T = false, f_min, 
         tumor_sample_col = :tumor, sample_freq_col = nothing,
         tumor_sample_func = df -> df, mut_freqs_func = TumorGrowth.mutation_freqs, subsample_func = df -> df)
+    println("get_turnover now also returns mus!")
     
     clade_turnover = Float64[]
     clone_turnover = Float64[]
@@ -64,10 +65,11 @@ function get_turnover(tumorinfo;
 
         sleep(0.01)
     end
-    return (ds = tumorinfo.d, Wa = clade_turnover, Wo = clone_turnover)
+    return (ds = tumorinfo.d, mus=tumorinfo.μ, Wa = clade_turnover, Wo = clone_turnover)
 end
 
 function infer_params( tumorinfo; N, Wa, Wo, usecorrection=true, estimate_N = true, tumor_sample_col = :__sample,)
+    println("infer_params now also returns mus!")
     dfits = []
     mufits = [] 
 
@@ -102,7 +104,7 @@ function infer_params( tumorinfo; N, Wa, Wo, usecorrection=true, estimate_N = tr
 
         sleep(0.01)
     end
-    return (ds = tumorinfo.d, dfits = dfits, mufits = mufits)
+    return (ds = tumorinfo.d, mus=tumorinfo.μ, dfits = dfits, mufits = mufits)
 end
 
 function plot_turnover_violin(ds, Wa, Wo; N, mu=nothing, mus = fill(mu,length(ds)),
@@ -156,8 +158,11 @@ function plot_infresult_violin(ds, dfits, mufits; mu=nothing, mus = fill(mu,leng
     dots!(p[2], ds*scalex, mufits, ylab=L"\mu_\mathrm{fit}", marker = (5, 0.2, :darkblue), alpha=0.4)
     distribution!(p[2], ds*scalex, mufits, marker = (5, 0.2, :darkblue), alpha=0.4, c=:lightblue)
     scatter!(p[2], d_uni*scalex, [median(mufits[bin]) for bin in bins], marker=(:hline, 3*scalex, :darkblue))
-    hline!(p[2], [mu], c=:red, lw = 2)
-    # scatter!(p[2], ds*scalex, mus, c=:red, marker=:hline, ms=15)
+    if isnothing(mu)
+        scatter!(p[2], ds*scalex, mus, c=:red, marker=:hline, ms=15)
+    else
+        hline!(p[2], [mu], c=:red, lw = 2)
+    end
     p
 end
 
