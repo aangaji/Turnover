@@ -65,7 +65,7 @@ function get_turnover(tumorinfo;
 
         sleep(0.01)
     end
-    return (ds = tumorinfo.d, mus=tumorinfo.μ, Wa = clade_turnover, Wo = clone_turnover)
+    return (ds = tumorinfo.d, mus=tumorinfo.mu, Wa = clade_turnover, Wo = clone_turnover)
 end
 
 function infer_params( tumorinfo; N, Wa, Wo, usecorrection=true, estimate_N = true, tumor_sample_col = :__sample,)
@@ -74,7 +74,7 @@ function infer_params( tumorinfo; N, Wa, Wo, usecorrection=true, estimate_N = tr
     mufits = [] 
 
     @showprogress for i in 1:nrow(tumorinfo)
-        b, mu = tumorinfo.b[i], tumorinfo.μ[i]
+        b, mu = tumorinfo.b[i], tumorinfo.mu[i]
         W_a, W_o = Wa[i], Wo[i]
         
         if estimate_N
@@ -104,7 +104,7 @@ function infer_params( tumorinfo; N, Wa, Wo, usecorrection=true, estimate_N = tr
 
         sleep(0.01)
     end
-    return (ds = tumorinfo.d, mus=tumorinfo.μ, dfits = dfits, mufits = mufits)
+    return (ds = tumorinfo.d, mus=tumorinfo.mu, dfits = dfits, mufits = mufits)
 end
 
 function plot_turnover_violin(ds, Wa, Wo; N, mu=nothing, mus = fill(mu,length(ds)),
@@ -165,6 +165,65 @@ function plot_infresult_violin(ds, dfits, mufits; mu=nothing, mus = fill(mu,leng
     end
     p
 end
+
+function plot_turnover_violin_vary_mu(mus, Wa, Wo; N, d=nothing,
+        distribution! = violin!, dots! = scatter!,
+        usecorrection = true, xlim=[0,1.1], scalex=5, ms_dots = 3, ms_median=scalex, xticks=range(xlim[1], stop=xlim[2], length=4),
+        markershape_median = :x, plotargs...)
+    mu_uni = unique(mus)
+    bins = [findall(isequal(mu), mus) for mu in mu_uni]
+    
+    corr = d -> usecorrection ? (1 - d) : 1 
+    
+    p = plot(; layout=(1,2), legend=:none, margin=3Plots.mm, xlab=L"\mu", 
+            xticks=(xticks*scalex, round.(xticks,digits=3)), 
+            xlim=scalex*xlim, plotargs...)
+
+    dots!(p[1], mus*scalex, Wa, ylab=L"W_{a}", alpha=0.2, ms = ms_dots, c=:darkblue)
+    distribution!(p[1], mus*scalex, Wa, marker = (5, 0.2, :darkblue), alpha=0.4, c=:lightblue)
+    scatter!(p[1], mu_uni*scalex, [median(Wa[bin]) for bin in bins], marker=(markershape_median, ms_median, :darkblue) )
+    plot!(p[1], (xlim[1]:0.01:min(1.,xlim[2]))*scalex, mu -> Turnover.W_orphaned(d; N=N * corr(d)), c=:black
+    )
+
+    dots!(p[2], mus*scalex, Wo, ylab=L"W_{o}", alpha=0.5, ms = ms_dots, c=:black)
+    distribution!(p[2], mus*scalex, Wo, marker = (5, 0.2, :darkblue), alpha=0.4, c=:lightblue)
+    scatter!(p[2], mu_uni*scalex, [median(Wo[bin]) for bin in bins], marker=(markershape_median, ms_median, :darkblue))
+    
+    plot!(p[2], c=:black, (xlim[1]:0.001:min(1.,xlim[2]))*scalex,
+            mu -> min(1, Turnover.W_estranged(d; b=1, μ=mu/scalex, T=log(N * corr(d) )/(1-d)))
+        )
+    p
+end
+
+function plot_infresult_violin_vary_mu(mus, dfits, mufits; d=nothing, size=(600,300), 
+        distribution! = violin!, dots! = scatter!,
+        scalex=5, xlim=[0,1.1], ylim_d=(0,1), ylim_mu=(0,1), yticks_d = 0:0.2:1, yticks_mu = 0:0.2:1,
+        ms_dots = 3, ms_median=scalex, xticks=range(xlim[1], stop=xlim[2], length=4),
+        markershape_median = :x, plotargs...)
+
+    mu_uni = unique(mus)
+    bins = [findall(isequal(mu), mus) for mu in mu_uni]
+    
+    p = plot(; layout=(1,2), size=size, legend=:none, margin=3Plots.mm, yguidefontrotation=-90,
+            aspect = scalex, xlab=L"\mu", 
+            xticks=(xticks*scalex, round.(xticks,digits=3)), 
+            xlim=scalex*xlim, plotargs...)
+
+    plot!( p[1], yaxis=(ylim_d,yticks_d))
+    dots!(p[1], mus*scalex, dfits, ylab=L"d_\mathrm{fit}", ms = ms_dots, alpha=0.4)
+    distribution!(p[1], mus*scalex, dfits, marker = (5, 0.2, :darkblue), alpha=0.4, c=:lightblue)
+    scatter!(p[1], mu_uni*scalex, [median(dfits[bin]) for bin in bins], marker=(markershape_median, ms_median, :darkblue) )
+    hline!(p[1], [d], lw=2, c=:red)
+    
+    plot!( p[2], yaxis=(ylim_mu,yticks_mu))
+    dots!(p[2], mus*scalex, mufits, ylab=L"\mu_\mathrm{fit}", ms = ms_dots, alpha=0.4)
+    distribution!(p[2], mus*scalex, mufits, marker = (5, 0.2, :darkblue), alpha=0.4, c=:lightblue)
+    scatter!(p[2], mu_uni*scalex, [median(mufits[bin]) for bin in bins], marker=(markershape_median, ms_median, :darkblue))
+    # plot!(p[2], mus*scalex, mus, c=:red, marker=:hline, ms=15)
+    p
+end
+
+
 
 
 
