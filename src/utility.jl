@@ -196,7 +196,7 @@ function plot_turnover_violin_vary_mu(mus, Wa, Wo; N, d=nothing,
 end
 
 function plot_infresult_violin_vary_mu(mus, dfits, mufits; d=nothing, size=(600,300), 
-        distribution! = violin!, dots! = scatter!,
+        distribution! = violin!, dots! = scatter!, lw = 2,
         scalex=5, xlim=[0,1.1], ylim_d=(0,1), ylim_mu=(0,1), yticks_d = 0:0.2:1, yticks_mu = 0:0.2:1,
         ms_dots = 3, ms_median=scalex, xticks=range(xlim[1], stop=xlim[2], length=4),
         markershape_median = :x, plotargs...)
@@ -213,7 +213,7 @@ function plot_infresult_violin_vary_mu(mus, dfits, mufits; d=nothing, size=(600,
     dots!(p[1], mus*scalex, dfits, ylab=L"d_\mathrm{fit}", ms = ms_dots, alpha=0.4)
     distribution!(p[1], mus*scalex, dfits, marker = (5, 0.2, :darkblue), alpha=0.4, c=:lightblue)
     scatter!(p[1], mu_uni*scalex, [median(dfits[bin]) for bin in bins], marker=(markershape_median, ms_median, :darkblue) )
-    hline!(p[1], [d], lw=2, c=:red)
+    hline!(p[1], [d], lw=lw, c=:red)
     
     plot!( p[2], yaxis=(ylim_mu,yticks_mu))
     dots!(p[2], mus*scalex, mufits, ylab=L"\mu_\mathrm{fit}", ms = ms_dots, alpha=0.4)
